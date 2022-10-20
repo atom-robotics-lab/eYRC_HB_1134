@@ -19,9 +19,9 @@ hola_theta = 0
 
 def odometryCb(msg):
     global hola_x, hola_y, hola_theta
-    hola_x = msg.pose.pose.orientation.x
-    hola_y = msg.pose.pose.orientation.y
-    hola_theta = msg.pose.pose.orientation.w
+    hola_x = msg.pose.pose.position.x
+    hola_y = msg.pose.pose.position.y
+    hola_theta = [msg.pose.pose.position.x, msg.pose.pose.position.y, euler_from_quaternion([msg.pose.pose.orientation.x, msg.pose.pose.orientation.y, msg.pose.pose.orientation.z, msg.pose.pose.orientation.w])[2]]
 	# Write your code to take the msg and update the three variables
 
 def main():
