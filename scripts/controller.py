@@ -27,8 +27,8 @@ class hola_bot:
         self.state = 0
         self.velocity_msg = Twist()
         self.kp = 0.5
-        self.theta_precision = 0.15
-        self.dist_precision = 0.25
+        self.theta_precision = 0.5
+        self.dist_precision = 0.05
 
     #callback function for the position
     def odometryCb(self, msg):
@@ -46,27 +46,62 @@ class hola_bot:
         self.pub.publish(self.velocity_msg)
 
     #move in straight line
-    def move_straight(self, vel_x, vel_y):
-        self.move(vel_x, vel_y, 0)
+    def move_straight(self, error_d):
+        self.move(self.kp * error_d, self.kp * error_d, 0)
 
     #to fix the angle/theta of the bot
     def fix_yaw(self, error_a):
         self.move(0,0,self.kp * error_a)
 
-def main():
-    print("this is the main function")
-    rospy.loginfo("Main will be our goto function containing the control loop")
-    '''
-    first we have to calculate the theta error to fix yaw
-    then calculate the distance error to move the bot towards goal
-    we have to check if we need to only provide linear.x or both linear.x and linear.y
-    for it to move straight
-    as the main will work as the control loop so we can pass the goal as arguments to it.
-    '''
+    def stop(self):
+        self.move(0,0,0)
+
+    def main(self, x, y):
+
+        print("this is the main function")
+        rospy.loginfo("Main will be our goto function containing the control loop")
+        
+        goal = False
+        while not goal:
+
+            theta_goal = np.arctan((y - self.hola_y)/(x - self.hola_x))   #slope
+            if theta_goal>0:
+                theta_goal+=0.04
+            elif theta_goal<0:
+                theta_goal-=0.04
+            bot_theta = self.hola_theta  
+            theta_error = round(bot_theta - theta_goal, 2)
+            rospy.loginfo("THETA ERROR:" + str(theta_error))
+
+            dist_error = math.sqrt(math.pow((x - self.hola_x),2) + math.pow((y - self.hola_y),2))
+
+            if np.abs(theta_error) > self.theta_precision:
+                rospy.loginfo("fixing yaw")
+                self.fix_yaw(theta_error)
+            
+            elif dist_error > self.dist_precision:
+                rospy.loginfo("moving straight")
+                self.move_straight(dist_error)
+
+            else:
+                rospy.loginfo("goal reached")
+                self.stop()
+                goal = True
+                return goal
+
+        
+        '''
+        first we have to calculate the theta error to fix yaw
+        then calculate the distance error to move the bot towards goal
+        we have to check if we need to only provide linear.x or both linear.x and linear.y
+        for it to move straight
+        as the main will work as the control loop so we can pass the goal as arguments to it.
+        '''
 
 
 if __name__ == "__main__":
     try:
-        main()
+        bot = hola_bot()
+        bot.main(2,2)
     except rospy.ROSInterruptException:
         pass
