@@ -10,98 +10,106 @@ from nav_msgs.msg import Odometry
 # for finding sin() cos() 
 import math
 
-import numpy as np
-
 # Odometry is given as a quaternion, but for the controller we'll need to find the orientaion theta by converting to euler angle
 from tf.transformations import euler_from_quaternion
 
-class hola_bot:
-    #initializing the variables
-    def __init__(self):
+hola_x = 0
+hola_y = 0
+hola_theta = 0
 
-        rospy.init_node('controller')
-        self.pub = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
-        rospy.Subscriber('/odom', Odometry, self.odometryCb)
+def odometryCb(msg):
+    global hola_x, hola_y, hola_theta
+    hola_x = msg.pose.pose.position.x
+    hola_y = msg.pose.pose.position.y
+    hola_theta = euler_from_quaternion([msg.pose.pose.orientation.x, msg.pose.pose.orientation.y, msg.pose.pose.orientation.z, msg.pose.pose.orientation.w])[2]
+    # Write your code to take the msg and update the three variables
+
+def main():
+    # Initialze Node
+    rospy.init_node('controller')
+    # We'll leave this for you to figure out the syntax for 
+    # initialising node named "controller"
+
+    # Initialze Publisher and Subscriber
+    # We'll leave this for you to figure out the syntax for
+    pub = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
+    rospy.Subscriber('/odom', Odometry, odometryCb)
+    # initialising publisher and subscriber of cmd_vel and odom respectively
+
+    # Declare a Twist message
+    vel = Twist()
+    # Initialise the required variables to 0
+    # <This is explained below>
+
+    # For maintaining control loop rate.
+    rate = rospy.Rate(100)
+    
+    # Initialise variables that may be needed for the control loop
+    x_d, y_d, theta_d = 2,2,0.785398
+    # For ex: x_d, y_d, theta_d (in **meters** and **radians**) for defining desired goal-pose.
+    # and also Kp values for the P Controller
+    kp = 1.5
+    #
+    # 
+    # Control Loop goes here
+    while not rospy.is_shutdown():
+        print("odom: " + str(hola_x)+" "+str(hola_y)+" "+str(hola_theta))
+        # Find error (in x, y and theta) in global frame
+        dist_error = math.sqrt(math.pow((x_d - hola_x),2) + math.pow((y_d - hola_y),2))
+        theta_error = round(theta_d - hola_theta, 2)
+        theta_tolerance = 0.0174532925
+        dist_tolerance = 0.05
+        # the /odom topic is giving pose of the robot in global frame
+        # the desired pose is declared above and defined by you in global frame
+        # therefore calculate error in global frame
         
-        self.pose = []
-        self.state = 0
-        self.velocity_msg = Twist()
-        self.kp = 0.5
-        self.theta_precision = 0.5
-        self.dist_precision = 0.05
-
-    #callback function for the position
-    def odometryCb(self, msg):
-
-        self.hola_x = msg.pose.pose.position.x
-        self.hola_y = msg.pose.pose.position.y
-        self.hola_theta = [msg.pose.pose.position.x, msg.pose.pose.position.y, euler_from_quaternion([msg.pose.pose.orientation.x, msg.pose.pose.orientation.y, msg.pose.pose.orientation.z, msg.pose.pose.orientation.w])[2]]
-        # Write your code to take the msg and update the three variables
-
-    #basic move function to give velocity to robot
-    def move(self, vel_x , vel_y, vel_z):
-        self.velocity_msg.linear.x = vel_x
-        self.velocity_msg.linear.y = vel_y
-        self.velocity_msg.angular.z = vel_z
-        self.pub.publish(self.velocity_msg)
-
-    #move in straight line
-    def move_straight(self, error_d):
-        self.move(self.kp * error_d, self.kp * error_d, 0)
-
-    #to fix the angle/theta of the bot
-    def fix_yaw(self, error_a):
-        self.move(0,0,self.kp * error_a)
-
-    def stop(self):
-        self.move(0,0,0)
-
-    def main(self, x, y):
-
-        print("this is the main function")
-        rospy.loginfo("Main will be our goto function containing the control loop")
+        # (Calculate error in body frame)
+        vel_x = 0
+        vel_y = 0
+        vel_z = 0
+        # But for Controller outputs robot velocity in robot_body frame, 
+        # i.e. velocity are define is in x, y of the robot frame, 
+        # Notice: the direction of z axis says the same in global and body frame
+        # therefore the errors will have have to be calculated in body frame.
+ 
+        # This is probably the crux of Task 1, figure this out and rest should be fine.
         
-        goal = False
-        while not goal:
+        # Finally implement a P controller
+        if -theta_tolerance < theta_error < +theta_tolerance:
+            if -dist_tolerance < dist_error < +dist_tolerance:
+                vel_x = 0
+                print("goal reached")
+                break
+            elif dist_error > +dist_tolerance:
+                vel_x = dist_error*kp
+            elif dist_error < -dist_tolerance:
+                vel_x = dist_error*kp
 
-            theta_goal = np.arctan((y - self.hola_y)/(x - self.hola_x))   #slope
-            if theta_goal>0:
-                theta_goal+=0.04
-            elif theta_goal<0:
-                theta_goal-=0.04
-            bot_theta = self.hola_theta  
-            theta_error = round(bot_theta - theta_goal, 2)
-            rospy.loginfo("THETA ERROR:" + str(theta_error))
+        elif theta_error > +theta_tolerance:
+            vel_z = theta_error*kp
 
-            dist_error = math.sqrt(math.pow((x - self.hola_x),2) + math.pow((y - self.hola_y),2))
+        elif theta_error < -theta_tolerance:
+            vel_z = -theta_error*kp
 
-            if np.abs(theta_error) > self.theta_precision:
-                rospy.loginfo("fixing yaw")
-                self.fix_yaw(theta_error)
-            
-            elif dist_error > self.dist_precision:
-                rospy.loginfo("moving straight")
-                self.move_straight(dist_error)
 
-            else:
-                rospy.loginfo("goal reached")
-                self.stop()
-                goal = True
-                return goal
-
+        # to react to the error with velocities in x, y and theta.
         
-        '''
-        first we have to calculate the theta error to fix yaw
-        then calculate the distance error to move the bot towards goal
-        we have to check if we need to only provide linear.x or both linear.x and linear.y
-        for it to move straight
-        as the main will work as the control loop so we can pass the goal as arguments to it.
-        '''
+        # Safety Check
+        # make sure the velocities are within a range.
+        # for now since we are in a simulator and we are not dealing with actual physical limits on the system 
+        # we may get away with skipping this step. But it will be very necessary in the long run.
+        rate.sleep()
+        vel.linear.x = vel_x
+        vel.linear.y = vel_y
+        vel.angular.z = vel_z
+        pub.publish(vel)
+        rate.sleep()
+    #
+    #
 
 
 if __name__ == "__main__":
-    try:
-        bot = hola_bot()
-        bot.main(2,2)
-    except rospy.ROSInterruptException:
-        pass
+	try:
+		main()
+	except rospy.ROSInterruptException:
+		pass
