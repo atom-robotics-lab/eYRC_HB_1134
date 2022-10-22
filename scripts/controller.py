@@ -13,9 +13,27 @@ import math
 # Odometry is given as a quaternion, but for the controller we'll need to find the orientaion theta by converting to euler angle
 from tf.transformations import euler_from_quaternion
 
+from geometry_msgs.msg import PoseArray
+
 hola_x = 0
 hola_y = 0
 hola_theta = 0
+x_goals, y_goals, theta_goals = [],[],[]
+def task1_goals_Cb(msg):
+	global x_goals, y_goals, theta_goals
+
+	x_goals.clear()
+	y_goals.clear()
+	theta_goals.clear()
+
+	for waypoint_pose in msg.poses:
+		x_goals.append(waypoint_pose.position.x)
+		y_goals.append(waypoint_pose.position.y)
+
+		orientation_q = waypoint_pose.orientation
+		orientation_list = [orientation_q.x, orientation_q.y, orientation_q.z, orientation_q.w]
+		theta_goal = euler_from_quaternion (orientation_list)[2]
+		theta_goals.append(theta_goal)
 
 def odometryCb(msg):
 	global hola_x, hola_y, hola_theta
@@ -34,8 +52,10 @@ def main():
 	# We'll leave this for you to figure out the syntax for
 	pub = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
 	rospy.Subscriber('/odom', Odometry, odometryCb)
+	rospy.Subscriber('/task1_goals', PoseArray, task1_goals_Cb)
 	# initialising publisher and subscriber of cmd_vel and odom respectively
 
+	rospy.wait_for_message("/task1_goals",PoseArray)
 	# Declare a Twist message
 	vel = Twist()
 	# Initialise the required variables to 0
@@ -45,14 +65,13 @@ def main():
 	rate = rospy.Rate(100)
 	
 	# Initialise variables that may be needed for the control loop
-	pi = 3.141592653589793238
-	x_goals = [1, 0, 0, 0, 1]
-	y_goals = [0, 1, 0, 0, 0]
-	theta_goals = [0, 0, 0, 3, -3]
+	#x_goals = [1, 0, 0, 0, 1]
+	#y_goals = [0, 1, 0, 0, 0]
+	#theta_goals = [0, 0, 0, 3, -3]
 	x_d, y_d, theta_d = x_goals[0],y_goals[0],theta_goals[0]
 	# For ex: x_d, y_d, theta_d (in **meters** and **radians**) for defining desired goal-pose.
 	# and also Kp values for the P Controller
-	kp = 0.4
+	kp = 0.5
 	vel_x = 0
 	vel_y = 0
 	vel_z = 0
@@ -69,7 +88,7 @@ def main():
 		y_error = round(y_d-hola_y, 2)
 		# dist_error = math.sqrt(math.pow((x_d - hola_x),2) + math.pow((y_d - hola_y),2))
 		theta_error = round(theta_d-hola_theta, 2)
-		dist_tolerance = 0.04
+		dist_tolerance = 0.05
 		print("errors", x_error,x_d,"-",hola_x,"|", y_error,y_d,"-",hola_y,"|", theta_error)
 		# the /odom topic is giving pose of the robot in global frame
 		# the desired pose is declared above and defined by you in global frame
@@ -103,9 +122,13 @@ def main():
 			temp_vy=0
 			if count < len(x_goals):
 				count+=1
-				x_d = x_goals[count]
-				y_d = y_goals[count]
-				theta_d = theta_goals[count] 
+				try:
+					x_d = x_goals[count]
+					y_d = y_goals[count]
+					theta_d = theta_goals[count]
+				except:
+					break
+					print("Run Completed") 
 		else:
 			vel_x = x*kp
 			vel_y = y*kp
@@ -118,14 +141,14 @@ def main():
 		# to react to the error with velocities in x, y and theta.
 		
 		# Safety Check
-		if vel_x > 0.4:
-			vel_x = 0.4
-		elif vel_x < -0.4:
-			vel_x = -0.4
+		if vel_x > 0.45:
+			vel_x = 0.45
+		elif vel_x < -0.45:
+			vel_x = -0.45
 		temp_vx = max(temp_vx,vel_x)
-		if vel_y > 0.4:
-			vel_y = 0.4
-		elif vel_y < -0.4:
+		if vel_y > 0.45:
+			vel_y = 0.45
+		elif vel_y < -0.45:
 			vel_y = -0.4
 		temp_vy = max(temp_vy,vel_y)
 		print("\n------velocities after check------\n",vel_x,vel_y,"\n-----------------------------------\n")
