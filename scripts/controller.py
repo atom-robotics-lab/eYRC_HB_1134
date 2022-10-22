@@ -45,28 +45,31 @@ def main():
     rate = rospy.Rate(100)
     
     # Initialise variables that may be needed for the control loop
-    x_d, y_d, theta_d = 2,2,0.785398
+    x_d, y_d, theta_d = 3,3,0.785398
     # For ex: x_d, y_d, theta_d (in **meters** and **radians**) for defining desired goal-pose.
     # and also Kp values for the P Controller
     kp = 1.5
+    vel_x = 0
+    vel_y = 0
+    vel_z = 0
+    state = 0
     #
     # 
     # Control Loop goes here
     while not rospy.is_shutdown():
-        print("odom: " + str(hola_x)+" "+str(hola_y)+" "+str(hola_theta))
         # Find error (in x, y and theta) in global frame
-        dist_error = math.sqrt(math.pow((x_d - hola_x),2) + math.pow((y_d - hola_y),2))
+        x_error = x_d-hola_x
+        y_error = y_d-hola_y
         theta_error = round(theta_d - hola_theta, 2)
-        theta_tolerance = 0.0174532925
         dist_tolerance = 0.05
+
         # the /odom topic is giving pose of the robot in global frame
         # the desired pose is declared above and defined by you in global frame
         # therefore calculate error in global frame
         
         # (Calculate error in body frame)
-        vel_x = 0
-        vel_y = 0
-        vel_z = 0
+        x = x_error*math.cos(theta_error)
+        y = y_error*math.sin(theta_error)
         # But for Controller outputs robot velocity in robot_body frame, 
         # i.e. velocity are define is in x, y of the robot frame, 
         # Notice: the direction of z axis says the same in global and body frame
@@ -75,21 +78,17 @@ def main():
         # This is probably the crux of Task 1, figure this out and rest should be fine.
         
         # Finally implement a P controller
-        if -theta_tolerance < theta_error < +theta_tolerance:
-            if -dist_tolerance < dist_error < +dist_tolerance:
-                vel_x = 0
-                print("goal reached")
-                break
-            elif dist_error > +dist_tolerance:
-                vel_x = dist_error*kp
-            elif dist_error < -dist_tolerance:
-                vel_x = dist_error*kp
-
-        elif theta_error > +theta_tolerance:
+        if x_d-dist_tolerance < hola_x < x_d+dist_tolerance:
+            vel_x = 0
+            vel_y = 0
+            vel_z = 0
+            state = 1
+            print("goal reached")
+        else:
+            vel_x = x*kp
+            vel_y = y*kp
             vel_z = theta_error*kp
-
-        elif theta_error < -theta_tolerance:
-            vel_z = -theta_error*kp
+            print("moving towards goal")
 
 
         # to react to the error with velocities in x, y and theta.
@@ -103,6 +102,8 @@ def main():
         vel.linear.y = vel_y
         vel.angular.z = vel_z
         pub.publish(vel)
+        if state == 1:
+            break
         rate.sleep()
     #
     #
