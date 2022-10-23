@@ -65,13 +65,13 @@ def main():
 	rate = rospy.Rate(100)
 	
 	# Initialise variables that may be needed for the control loop
-	#x_goals = [1, 0, 0, 0, 1]
-	#y_goals = [0, 1, 0, 0, 0]
+	#x_goals = [1,0,0,0,1]
+	#y_goals = [0,1,0,0,0]
 	#theta_goals = [0, 0, 0, 3, -3]
 	x_d, y_d, theta_d = x_goals[0],y_goals[0],theta_goals[0]
 	# For ex: x_d, y_d, theta_d (in **meters** and **radians**) for defining desired goal-pose.
 	# and also Kp values for the P Controller
-	kp = 0.75
+	kp = 1.6
 	vel_x = 0
 	vel_y = 0
 	vel_z = 0
@@ -114,8 +114,8 @@ def main():
 				print("\n------------------------------------------------------------------\n")
 				vel.linear.x = 0
 				vel.linear.y = 0
-				vel.angular.z = theta_error*1.1
-				theta_error = round(theta_d-hola_theta, 2)
+				vel.angular.z = theta_error*3
+				theta_error = round(theta_d-hola_theta, 3)
 				pub.publish(vel)
 				rate.sleep()
 
@@ -140,7 +140,22 @@ def main():
 					y_d = y_goals[count]
 					theta_d = theta_goals[count]
 				except:
-					print("Run Completed") 
+					print("Run Completed")
+
+			while not -0.5 < round(hola_theta, 2) < 0.5:
+				print("\n------------------------------------------------------------------\n")
+				print("current theta:", hola_theta, "goal: 0")
+				print("\n------------------------------------------------------------------\n")
+				if hola_theta > 0.5:
+					vel.linear.x = 0
+					vel.linear.y = 0
+					vel.angular.z = -round(hola_theta, 2)*3.3
+				if hola_theta < 0.5:
+					vel.linear.x = 0
+					vel.linear.y = 0
+					vel.angular.z = round(hola_theta, 2)*3.3
+				pub.publish(vel)
+				rate.sleep()
 		else:
 			vel_x = x*kp
 			vel_y = y*kp
@@ -153,15 +168,15 @@ def main():
 		# to react to the error with velocities in x, y and theta.
 		
 		# Safety Check
-		if vel_x > 0.55:
-			vel_x = 0.55
-		elif vel_x < -0.55:
-			vel_x = -0.55
+		if vel_x > 0.95:
+			vel_x = 0.95
+		elif vel_x < -0.95:
+			vel_x = -0.95
 		temp_vx = max(temp_vx,vel_x)
-		if vel_y > 0.55:
-			vel_y = 0.55
-		elif vel_y < -0.55:
-			vel_y = -0.55
+		if vel_y > 0.95:
+			vel_y = 0.95
+		elif vel_y < -0.95:
+			vel_y = -0.95
 		temp_vy = max(temp_vy,vel_y)
 		print("\n------velocities after check------\n",vel_x,vel_y,"\n-----------------------------------\n")
 		# make sure the velocities are within a range.
