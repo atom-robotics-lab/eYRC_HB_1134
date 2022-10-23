@@ -29,7 +29,8 @@ def odometryCb(msg):
     global hola_x, hola_y, hola_theta
     hola_x = msg.pose.pose.position.x
     hola_y = msg.pose.pose.position.y
-    hola_theta = euler_from_quaternion([msg.pose.pose.orientation.x, msg.pose.pose.orientation.y, msg.pose.pose.orientation.z, msg.pose.pose.orientation.w])[2]
+    hola_theta = euler_from_quaternion(
+        [msg.pose.pose.orientation.x, msg.pose.pose.orientation.y, msg.pose.pose.orientation.z, msg.pose.pose.orientation.w])[2]
 
 
 def task1_goals_Cb(msg):
@@ -44,7 +45,8 @@ def task1_goals_Cb(msg):
         y_goals.append(waypoint_pose.position.y)
 
         orientation_q = waypoint_pose.orientation
-        orientation_list = [orientation_q.x, orientation_q.y, orientation_q.z, orientation_q.w]
+        orientation_list = [orientation_q.x,
+                            orientation_q.y, orientation_q.z, orientation_q.w]
         theta_goal = euler_from_quaternion(orientation_list)[2]
         theta_goals.append(theta_goal)
 
@@ -78,7 +80,8 @@ def main():
         print("odom: " + str(hola_x)+" "+str(hola_y)+" "+str(hola_theta))
 
         # Find error (in x, y and theta) in global frame
-        dist_error = math.sqrt(math.pow((x_d - hola_x), 2) + math.pow((y_d - hola_y), 2))
+        dist_error = math.sqrt(
+            math.pow((x_d - hola_x), 2) + math.pow((y_d - hola_y), 2))
         theta_error = round(theta_d - hola_theta, 2)
 
         x_error = round(x_d-hola_x, 2)
@@ -95,8 +98,9 @@ def main():
         vel_y = 0
         vel_z = 0
         count = 0
-		
-        rospy.loginfo("theta error: %f, distance error: %f", theta_error, dist_error)
+
+        rospy.loginfo("theta error: %f, distance error: %f",
+                      theta_error, dist_error)
 
         # comparing the errors with their tolerance and moving the bot accordingly
         if -theta_tolerance < theta_error < +theta_tolerance:
@@ -114,7 +118,6 @@ def main():
                         theta_d = theta_goals[count]
                     except:
                         print("Run Completed")
-                break
 
             elif abs(dist_error) > dist_tolerance:
                 # There is error in distance so moving the bot in straight line
