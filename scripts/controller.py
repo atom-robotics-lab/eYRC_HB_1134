@@ -71,7 +71,7 @@ def main():
 	x_d, y_d, theta_d = x_goals[0],y_goals[0],theta_goals[0]
 	# For ex: x_d, y_d, theta_d (in **meters** and **radians**) for defining desired goal-pose.
 	# and also Kp values for the P Controller
-	kp = 0.5
+	kp = 0.75
 	vel_x = 0
 	vel_y = 0
 	vel_z = 0
@@ -88,6 +88,7 @@ def main():
 		y_error = round(y_d-hola_y, 2)
 		# dist_error = math.sqrt(math.pow((x_d - hola_x),2) + math.pow((y_d - hola_y),2))
 		theta_error = round(theta_d-hola_theta, 2)
+		theta_tolerance = 0.01745
 		dist_tolerance = 0.05
 		print("errors", x_error,x_d,"-",hola_x,"|", y_error,y_d,"-",hola_y,"|", theta_error)
 		# the /odom topic is giving pose of the robot in global frame
@@ -106,6 +107,18 @@ def main():
 		
 		# Finally implement a P controller
 		if  abs(x_error) < dist_tolerance and abs(y_error) < +dist_tolerance:
+			while not abs(theta_error) < theta_tolerance:
+				print("\n------------------------------------------------------------------\n")
+				print("error:", theta_error)
+				print("current theta:", hola_theta, "goal:",theta_d)
+				print("\n------------------------------------------------------------------\n")
+				vel.linear.x = 0
+				vel.linear.y = 0
+				vel.angular.z = theta_error*1.1
+				theta_error = round(theta_d-hola_theta, 2)
+				pub.publish(vel)
+				rate.sleep()
+
 			vel.linear.x = 0
 			vel.linear.y = 0
 			vel.angular.z = 0
@@ -127,7 +140,6 @@ def main():
 					y_d = y_goals[count]
 					theta_d = theta_goals[count]
 				except:
-					break
 					print("Run Completed") 
 		else:
 			vel_x = x*kp
@@ -141,15 +153,15 @@ def main():
 		# to react to the error with velocities in x, y and theta.
 		
 		# Safety Check
-		if vel_x > 0.45:
-			vel_x = 0.45
-		elif vel_x < -0.45:
-			vel_x = -0.45
+		if vel_x > 0.55:
+			vel_x = 0.55
+		elif vel_x < -0.55:
+			vel_x = -0.55
 		temp_vx = max(temp_vx,vel_x)
-		if vel_y > 0.45:
-			vel_y = 0.45
-		elif vel_y < -0.45:
-			vel_y = -0.4
+		if vel_y > 0.55:
+			vel_y = 0.55
+		elif vel_y < -0.55:
+			vel_y = -0.55
 		temp_vy = max(temp_vy,vel_y)
 		print("\n------velocities after check------\n",vel_x,vel_y,"\n-----------------------------------\n")
 		# make sure the velocities are within a range.
