@@ -65,9 +65,9 @@ def main():
 	rate = rospy.Rate(100)
 	
 	# Initialise variables that may be needed for the control loop
-	#x_goals = [1,0,0,0,1]
-	#y_goals = [0,1,0,0,0]
-	#theta_goals = [0, 0, 0, 3, -3]
+	#x_goals,y_goals,theta_goals = [0,1,-1,0,0], [1,-1,-1,1,-1], [0, 0, 0, 0, 0]
+	#x_goals,y_goals,theta_goals = [1,-1,-1,1,0], [1,1,-1,-1,0], [0.785, 2.335, -2.335, -0.785, 0]
+	#x_goals,y_goals,theta_goals = [1,0,0,0,1], [0,1,0,0,0], [0, 0, 0, 3, -3]
 	x_d, y_d, theta_d = x_goals[0],y_goals[0],theta_goals[0]
 	# For ex: x_d, y_d, theta_d (in **meters** and **radians**) for defining desired goal-pose.
 	# and also Kp values for the P Controller
@@ -114,7 +114,7 @@ def main():
 				print("\n------------------------------------------------------------------\n")
 				vel.linear.x = 0
 				vel.linear.y = 0
-				vel.angular.z = theta_error*3
+				vel.angular.z = theta_error*3.2
 				theta_error = round(theta_d-hola_theta, 3)
 				pub.publish(vel)
 				rate.sleep()
@@ -123,14 +123,14 @@ def main():
 			vel.linear.y = 0
 			vel.angular.z = 0
 			pub.publish(vel)
+
 			print("\n------------------------------------------------------------------\n")
 			print("goal reached")
 			print("Sleep for 1 sec")
 			print("max velocity x:", temp_vx)
 			print("max velocity y:", temp_vy)
 			print("\n------------------------------------------------------------------\n")
-			rospy.sleep(1)
-			pub.publish(vel)
+			rospy.sleep(1.5)
 			temp_vx=0
 			temp_vy=0
 			if count < len(x_goals):
@@ -141,6 +141,7 @@ def main():
 					theta_d = theta_goals[count]
 				except:
 					print("Run Completed")
+					return
 
 			while not -0.5 < round(hola_theta, 2) < 0.5:
 				print("\n------------------------------------------------------------------\n")
@@ -149,13 +150,18 @@ def main():
 				if hola_theta > 0.5:
 					vel.linear.x = 0
 					vel.linear.y = 0
-					vel.angular.z = -round(hola_theta, 2)*3.3
+					vel.angular.z = -round(hola_theta, 2)*3.5
 				if hola_theta < 0.5:
 					vel.linear.x = 0
 					vel.linear.y = 0
-					vel.angular.z = round(hola_theta, 2)*3.3
+					vel.angular.z = round(hola_theta, 2)*3.5
 				pub.publish(vel)
 				rate.sleep()
+
+			vel.linear.x = 0
+			vel.linear.y = 0
+			vel.angular.z = 0
+			pub.publish(vel) 
 		else:
 			vel_x = x*kp
 			vel_y = y*kp
@@ -168,15 +174,15 @@ def main():
 		# to react to the error with velocities in x, y and theta.
 		
 		# Safety Check
-		if vel_x > 0.95:
-			vel_x = 0.95
-		elif vel_x < -0.95:
-			vel_x = -0.95
+		if vel_x > 1.25:
+			vel_x = 1.25
+		elif vel_x < -1.25:
+			vel_x = -1.25
 		temp_vx = max(temp_vx,vel_x)
-		if vel_y > 0.95:
-			vel_y = 0.95
-		elif vel_y < -0.95:
-			vel_y = -0.95
+		if vel_y > 1.25:
+			vel_y = 1.25
+		elif vel_y < -1.25:
+			vel_y = -1.25
 		temp_vy = max(temp_vy,vel_y)
 		print("\n------velocities after check------\n",vel_x,vel_y,"\n-----------------------------------\n")
 		# make sure the velocities are within a range.
