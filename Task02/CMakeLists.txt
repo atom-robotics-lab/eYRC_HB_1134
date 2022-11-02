@@ -1,17 +1,17 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(your_package_name)
+project(Task02)
 
 
 add_definitions(-std=c++11)
 
 find_package(catkin REQUIRED COMPONENTS
-  message_generation 
-  gazebo_msgs 
-  roscpp 
-  rospy  
-  std_srvs 
-  geometry_msgs 
-  sensor_msgs 
+  message_generation
+  gazebo_msgs
+  roscpp
+  rospy
+  std_srvs
+  geometry_msgs
+  sensor_msgs
   nav_msgs
   std_msgs
   gazebo_ros
@@ -37,12 +37,12 @@ include_directories(${Boost_INCLUDE_DIRS})
 
 catkin_package(
   INCLUDE_DIRS include
-  LIBRARIES 
-	DEPENDS 
-	    roscpp 
+  LIBRARIES
+	DEPENDS
+	    roscpp
 	    gazebo_ros
-      std_msgs 
-      geometry_msgs 
+      std_msgs
+      geometry_msgs
       message_runtime
       dynamic_reconfigure
 )
@@ -51,7 +51,7 @@ catkin_package(
 ### BUILD ###
 
 add_library(custom_force src/custom_force.cpp)
-add_dependencies(custom_force your_package_name_custom_force_cpp)
+add_dependencies(custom_force Task02_custom_force_cpp)
 target_link_libraries (custom_force ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES})
 
 ### INSTALL ###
