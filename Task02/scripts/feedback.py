@@ -79,9 +79,6 @@ def control_loop():
     global cv1_image
     Result = aruco_detection(cv1_image)
 
-    cv2.putText(Result[4], (300, 800),cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 0, 0), 3, cv2.LINE_AA)
-    cv2.putText(Result[4], (350, 100),cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 0, 0), 3, cv2.LINE_AA)
-
     cv2.imshow("Frame", Result[4])
     cv2.waitKey(1)
 
@@ -97,7 +94,7 @@ def aruco_detection(image):
     if len(corners) > 0:
 
         ids = ids.flatten()
-        # Creating a circle around the aruco marker and printing its id
+        
         for (markerCorner, markerID) in zip(corners, ids):
             corners = markerCorner.reshape((4, 2))
             (topLeft, topRight, bottomRight, bottomLeft) = corners
