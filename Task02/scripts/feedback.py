@@ -59,6 +59,7 @@ center = None
 markerID1 = None
 radius1 = None
 T = 0
+dist = 0
 
 
 def callback(data):
@@ -68,11 +69,8 @@ def callback(data):
     br = CvBridge()
     rospy.loginfo("receiving camera frame")
     # Receiving raw image in a "grayscale" format
-    rospy.loginfo("frame")
     get_frame = br.imgmsg_to_cv2(data, "mono8")
-    print("resizing")
     current_frame = cv2.resize(get_frame, (500, 500), interpolation=cv2.INTER_LINEAR)
-    print("hello")
     cv1_image = br.imgmsg_to_cv2(data, "bgr8")
     control_loop()
     
@@ -113,18 +111,20 @@ def aruco_detection(image):
             cv2.circle(image, (cX, cY), radius, (0, 0, 255), 3)
 
             cv2.putText(image, "Aruco Marker ID = " + str(markerID),(topLeft[0] + 20, topLeft[1] - 55),cv2.FONT_HERSHEY_SIMPLEX,0.5, (0, 0, 0), 2)
+            print(cX, cY)
 
             center = (((topLeft[0] + bottomRight[0]) / 2.0),((topLeft[1] + bottomRight[1]) / 2.0))
 
             markerID1 = markerID
             print(markerID1)
             radius1 = radius
-
+            dist = math.sqrt(math.pow(cX - 500 , 2) + math.pow(cY - 500 , 2))
+            rospy.loginfo("Distance = %f", dist)
     key = cv2.waitKey(1) & 0xFF
     if key == ord("q"):
         exit()
 
-    return [gray, center, radius1, markerID1, image]
+    return [gray, center, radius1, markerID1, image, dist]
 
 
 def main():
