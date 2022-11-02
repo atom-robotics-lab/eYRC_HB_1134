@@ -41,7 +41,7 @@ import imutils
 
 ############################ GLOBALS #############################
 
-aruco_publisher = rospy.Publisher('detected_aruco', Pose2D)
+aruco_publisher = rospy.Publisher('detected_aruco', Pose2D, queue_size=10)
 aruco_msg = Pose2D()
 
 arucoDict = cv2.aruco.Dictionary_get(cv2.aruco.DICT_4X4_250)
@@ -68,19 +68,19 @@ def callback(data):
     br = CvBridge()
     rospy.loginfo("receiving camera frame")
     # Receiving raw image in a "grayscale" format
+    rospy.loginfo("frame")
     get_frame = br.imgmsg_to_cv2(data, "mono8")
+    print("resizing")
     current_frame = cv2.resize(get_frame, (500, 500), interpolation=cv2.INTER_LINEAR)
-
+    print("hello")
     cv1_image = br.imgmsg_to_cv2(data, "bgr8")
     control_loop()
     
 
 def control_loop():
+    print("control loop")
     global cv1_image
     Result = aruco_detection(cv1_image)
-
-    cv2.putText(Result[4], (300, 800),cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 0, 0), 3, cv2.LINE_AA)
-    cv2.putText(Result[4], (350, 100),cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 0, 0), 3, cv2.LINE_AA)
 
     cv2.imshow("Frame", Result[4])
     cv2.waitKey(1)
@@ -130,7 +130,7 @@ def aruco_detection(image):
 def main():
     rospy.init_node('aruco_feedback_node')
     rospy.Subscriber('/overhead_cam/image_raw', Image, callback)
-    image_pub = rospy.Publisher("image_topic_2", Image)
+    image_pub = rospy.Publisher("image_topic_2", Image, queue_size=10)
     
     rospy.spin()
 
