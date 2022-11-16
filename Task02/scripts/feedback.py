@@ -60,7 +60,9 @@ markerID1 = None
 radius1 = None
 T = 0
 dist = 0
-
+angle = 0
+count = 0
+radians = 0
 
 def callback(data):
 
@@ -84,6 +86,8 @@ def control_loop():
     cv2.waitKey(1)
 
 def aruco_detection(image):
+
+    global count, radians, angle
 
     image = image
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
@@ -122,15 +126,25 @@ def aruco_detection(image):
                 angle = 0
 
             else:
-                slope = int((cY - my) / (cX - mx))
-                angle = round(math.degrees(math.atan(slope)) , 3)
+                slope = float((cY - my) / (cX - mx))
+                radians = (math.atan2(slope , 1))
+                angle = math.degrees(math.atan2(slope , 1))
                 angle = 90 - angle
 
-            if 360 > angle > 180:
-                angle = angle - 360
+            # if topLeft[0] == topRight[0]:
+            #     count = count + 1
 
-            else:
-                angle = angle
+            # if count%2 == 0:
+            #     angle = angle
+
+            # else:
+            #     angle = angle + 180
+
+            # if 360 > angle > 180:
+            #     angle = angle - 360
+
+            # else:
+            #     angle = angle
 
             cv2.circle(image, (cX, cY), radius, (0, 0, 255), 3)
 
@@ -143,6 +157,7 @@ def aruco_detection(image):
             print(angle)
             cv2.putText(image, "Angle = " + str(angle), (200, 200), cv2.FONT_HERSHEY_SIMPLEX,0.5, (0, 0, 0), 2)
             cv2.putText(image, "bot_x = " + str(cX) + ", bot_y = " + str(cY), (cX - 50, cY - 50), cv2.FONT_HERSHEY_SIMPLEX,0.5, (0, 0, 0), 2)
+            cv2.putText(image, "radians = " + str(radians), (50, 50), cv2.FONT_HERSHEY_SIMPLEX,0.5, (0, 0, 0), 2)
 
             radius1 = radius
 
@@ -155,7 +170,7 @@ def aruco_detection(image):
     if key == ord("q"):
         exit()
 
-    return [gray, center, radius1, markerID1, image, cX, cY, dist, angle]
+    return [gray, center, radius1, markerID1, image, cX, cY, dist, angle, radians]
 
 
 def main():
