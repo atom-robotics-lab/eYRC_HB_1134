@@ -152,6 +152,11 @@ def aruco_detection(image):
 
             center = (((topLeft[0] + bottomRight[0]) / 2.0),((topLeft[1] + bottomRight[1]) / 2.0))
 
+            aruco_msg.x = cX
+            aruco_msg.y = cY
+            aruco_msg.theta = radians
+            aruco_publisher.publish(aruco_msg)
+
             markerID1 = markerID
             print(markerID1)
             print(angle)
@@ -170,7 +175,7 @@ def aruco_detection(image):
     if key == ord("q"):
         exit()
 
-    return [gray, center, radius1, markerID1, image, cX, cY, dist, angle, radians]
+    return [gray, center, radius1, markerID1, image, cX, cY, radians]
 
 
 def main():
