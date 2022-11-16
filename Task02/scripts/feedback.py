@@ -83,7 +83,6 @@ def control_loop():
     cv2.imshow("Frame", Result[4])
     cv2.waitKey(1)
 
-
 def aruco_detection(image):
 
     image = image
@@ -127,6 +126,12 @@ def aruco_detection(image):
                 angle = round(math.degrees(math.atan(slope)) , 3)
                 angle = 90 - angle
 
+            if 360 > angle > 180:
+                angle = angle - 360
+
+            else:
+                angle = angle
+
             cv2.circle(image, (cX, cY), radius, (0, 0, 255), 3)
 
             cv2.putText(image, "Aruco Marker ID = " + str(markerID),(topLeft[0] + 20, topLeft[1] - 55),cv2.FONT_HERSHEY_SIMPLEX,0.5, (0, 0, 0), 2)
@@ -137,6 +142,7 @@ def aruco_detection(image):
             print(markerID1)
             print(angle)
             cv2.putText(image, "Angle = " + str(angle), (200, 200), cv2.FONT_HERSHEY_SIMPLEX,0.5, (0, 0, 0), 2)
+            cv2.putText(image, "bot_x = " + str(cX) + ", bot_y = " + str(cY), (cX - 50, cY - 50), cv2.FONT_HERSHEY_SIMPLEX,0.5, (0, 0, 0), 2)
 
             radius1 = radius
 
