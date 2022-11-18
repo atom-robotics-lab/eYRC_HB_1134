@@ -63,6 +63,7 @@ dist = 0
 angle = 0
 count = 0
 radians = math.pi/2
+global current_frame
 
 def callback(data):
 
@@ -73,13 +74,15 @@ def callback(data):
     # Receiving raw image in a "grayscale" format
     get_frame = br.imgmsg_to_cv2(data, "mono8")
     current_frame = cv2.resize(get_frame, (500, 500), interpolation=cv2.INTER_LINEAR)
-    cv1_image = br.imgmsg_to_cv2(data, "bgr8")
-    control_loop()
-    
+    # print(current_frame)
+    # current_frame=current_frame[::-1,::-1]
+    # current_frame=current_frame[:,:,::-1]
 
-def control_loop():
+    cv1_image = br.imgmsg_to_cv2(data, "bgr8")
+
+    
     print("control loop")
-    global cv1_image
+    # global cv1_image
     Result = aruco_detection(cv1_image)
 
     cv2.imshow("Frame", Result[4])
@@ -92,7 +95,7 @@ def aruco_detection(image):
     image = image
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
-    image = imutils.resize(image, width=1000)
+    image = cv2.resize(image, (500,500), interpolation = cv2.INTER_LINEAR)
     (corners, ids, rejected) = cv2.aruco.detectMarkers(image,arucoDict, parameters=arucoParams)
 
     if len(corners) > 0:
@@ -126,10 +129,20 @@ def aruco_detection(image):
                 angle = 0
 
             else:
+                # angle_list_1 = list(range(359,0,-1))
+                # angle_list_1 = angle_list_1[90:] + angle_list_1[:90]
+                # angle_list_2 = list(range(359,0,-1))
+                # angle_list_2 = angle_list_2[-90:] + angle_list_2[:-90]
+                # x=pt2[0]-pt1[0] # unpacking tuple
+                # y=pt2[1]-pt1[1]
+                # angle=int(math.degrees(math.atan2(y,x)))
+               
                 slope = float((cY - my) / (cX - mx))
-                radians = (math.atan2(slope , 1))
-                angle = math.degrees(math.atan2(slope , 1))
-                angle = 90 - angle
+                radians = (math.atan2(slope,1))
+                radians= radians - math.pi/2
+                angle =math.degrees(math.atan2(slope,1))
+                angle=90-angle
+                # radians = 1.5708- radians
 
             # if topLeft[0] == topRight[0]:
             #     count = count + 1
