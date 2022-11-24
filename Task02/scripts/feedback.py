@@ -41,7 +41,7 @@ import imutils
 
 ############################ GLOBALS #############################
 
-aruco_publisher = rospy.Publisher('detected_aruco', Pose2D, queue_size=10)
+aruco_publisher = rospy.Publisher('/detected_aruco', Pose2D, queue_size=10)
 aruco_msg = Pose2D()
 
 arucoDict = cv2.aruco.Dictionary_get(cv2.aruco.DICT_4X4_250)
@@ -72,13 +72,13 @@ def callback(data):
     br = CvBridge()
     rospy.loginfo("receiving camera frame")
     # Receiving raw image in a "grayscale" format
-    get_frame = br.imgmsg_to_cv2(data, "mono8")
-    current_frame = cv2.resize(get_frame, (500, 500), interpolation=cv2.INTER_LINEAR)
+    # get_frame = br.imgmsg_to_cv2(data, "mono8")
+    # current_frame = cv2.resize(get_frame, (500, 500), interpolation=cv2.INTER_LINEAR)
     # print(current_frame)
-    # current_frame=current_frame[::-1,::-1]
     # current_frame=current_frame[:,:,::-1]
 
     cv1_image = br.imgmsg_to_cv2(data, "bgr8")
+    # cv1_image=cv1_image[::-1,::-1]
 
     
     print("control loop")
@@ -92,7 +92,7 @@ def aruco_detection(image):
 
     global count, radians, angle
 
-    image = image
+    image = cv1_image
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
     image = cv2.resize(image, (500,500), interpolation = cv2.INTER_LINEAR)
@@ -113,7 +113,7 @@ def aruco_detection(image):
             bottomLeft = (int(bottomLeft[0]), int(bottomLeft[1]))
             topLeft = (int(topLeft[0]), int(topLeft[1]))
 
-            print(topLeft, topRight, bottomLeft, bottomRight)
+            print(topLeft, topRight, bottomLeft, bottomRight,"DDDDDDDDDDDDD")
 
             radius = int(math.sqrt((int(topRight[0]) - int(bottomLeft[0])) ** 2 + (int(topRight[1]) - int(bottomLeft[1])) ** 2) / 2)
 
@@ -129,6 +129,7 @@ def aruco_detection(image):
                 angle = 0
 
             else:
+                # print("SSSSSSSSSSSSS")
                 # angle_list_1 = list(range(359,0,-1))
                 # angle_list_1 = angle_list_1[90:] + angle_list_1[:90]
                 # angle_list_2 = list(range(359,0,-1))
@@ -139,7 +140,8 @@ def aruco_detection(image):
                
                 slope = float((cY - my) / (cX - mx))
                 radians = (math.atan2(slope,1))
-                radians= radians - math.pi/2
+                # print("DDDDDDDDDDD",radians)
+                radians= (1.5708+radians)
                 angle =math.degrees(math.atan2(slope,1))
                 angle=90-angle
                 # radians = 1.5708- radians
@@ -173,7 +175,7 @@ def aruco_detection(image):
             markerID1 = markerID
             print(markerID1)
             print(angle)
-            cv2.putText(image, "Angle = " + str(angle), (200, 200), cv2.FONT_HERSHEY_SIMPLEX,0.5, (0, 0, 0), 2)
+            cv2.putText(image, "Angle = " + str(angle), (60, 60), cv2.FONT_HERSHEY_SIMPLEX,0.5, (0, 0, 0), 2)
             cv2.putText(image, "bot_x = " + str(cX) + ", bot_y = " + str(cY), (cX - 50, cY - 50), cv2.FONT_HERSHEY_SIMPLEX,0.5, (0, 0, 0), 2)
             cv2.putText(image, "radians = " + str(radians), (50, 50), cv2.FONT_HERSHEY_SIMPLEX,0.5, (0, 0, 0), 2)
 

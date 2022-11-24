@@ -25,7 +25,7 @@ hola_x = 0
 hola_y = 0
 hola_theta =0
 x_goals, y_goals, theta_goals = [],[],[]
-# def task1_goals_Cb(msg):
+# def task2_goals_Cb(msg):
 	# global x_goals, y_goals, theta_goals
 # 
 	# x_goals.clear()	
@@ -41,21 +41,26 @@ x_goals, y_goals, theta_goals = [],[],[]
 		# theta_goal = euler_from_quaternion (orientation_list)[2]
 		# theta_goals.append(theta_goal)
 
+# def odom_feedback(msg):
+	# global hola_theta_odom
+	# hola_theta_odom = euler_from_quaternion(
+		# [msg.pose.pose.orientation.x, msg.pose.pose.orientation.y, msg.pose.orientation.z, msg.pose.pose.orientation.w])[2]
+	# print("$$$$$$$$$$$$",hola_theta_odom)
+
 def aruco_feedback_Cb(msg):
-	global hola_x, hola_y, hola_theta
+	global hola_x, hola_y, hola_theta ,hola_theta_odom
 	hola_x = msg.x
 	hola_y = msg.y
-	hola_theta = (msg.theta)
+	hola_theta =msg.theta
 
 	# hola_x = msg.pose.pose.position.x
 	# hola_y = msg.pose.pose.position.y
-	# hola_theta = euler_from_quaternion(
-		# [msg.pose.pose.orientation.x, msg.pose.pose.orientation.y, msg.pose.`pose`.orientation.z, msg.pose.pose.orientation.w])[2]
-
+	# print(hola_theta)
 
 	# Write your code to take the msg and update the three variables
 
 def main():
+	global hola_theta_odom
 	# Initialze Node
 	rospy.init_node('controller')
 	# We'll leave this for you to figure out the syntax for 
@@ -66,7 +71,7 @@ def main():
 	# pub = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
 
 	rospy.Subscriber('/detected_aruco', Pose2D, aruco_feedback_Cb)
-	#rospy.Subscriber('/odom', Odometry, aruco_feedback_Cb)
+	# rospy.Subscriber('/odom', Odometry, odom_feedback)
 
 	right_wheel_pub = rospy.Publisher(
 		'/right_wheel_force', Wrench, queue_size=10)
@@ -79,12 +84,15 @@ def main():
 	left_wheel_pub = rospy.Publisher(
 		'/left_wheel_force', Wrench, queue_size=10)
 	wrench3=Wrench()
+	# hola_theta =msg.theta
+	# hola_theta_odom = euler_from_quaternion(
+		# [msg.pose.pose.orientation.x, msg.pose.pose.orientation.y, msg.pose.orientation.z, msg.pose.pose.orientation.w])[2]
 
-	# rospy.Subscriber('/task1_goals', PoseArray, task1_goals_Cb)
+	# rospy.Subscriber('/task2_goals', PoseArray, task2_goals_Cb)
 
 	# initialising publisher and subscriber of cmd_vel and odom respectively
 
-	# rospy.wait_for_message("/task1_goals",PoseArray)
+	# rospy.wait_for_message("/task2_goals",PoseArray)
 
 	# Declare a Twist message
 	# vel = Twist()
@@ -95,18 +103,19 @@ def main():
 	rate = rospy.Rate(100)
 	
 	# Initialise variables that may be needed for the control loop
-	# x_goals,y_goals,theta_goals =[50,350,50,250,250], [350,50,50,350,50], [0, 0, 0, 0, 0]
-	# x_goals,y_goals,theta_goals = [1,-1,-1,1,0], [1,1,-1,-1,0], [0.785, 2.335, -2.335, -0.785, 0]
+	x_goals,y_goals,theta_goals =[50,350,50,250,250], [350,50,50,350,50], [0, 0, 0, 0, 0]
+	# x_goals,y_goals,theta_goals = [350,50,50,350,250], [350,350,50,50,250], [0.785, 2.335, -2.335, -0.785, 0]
+	
 	# x_goals,y_goals,theta_goals = [1,0,0,0,1], [0,1,0,0,0], [0, 0, 0, 3, -3]
 	# x_goals, y_goals, theta_goals = [
 	# 1, -1, -1, 1, 0], [1, 1, -1, -1, 0], [0.785, 2.335, -2.335, -0.785, 0]
-	x_goals, y_goals, theta_goals = [50,350,50,250,250], [350,50,50,350,50], [0, 0, 0, 0, 0]
+	# x_goals, y_goals, theta_goals = [50,350,50,250,250], [350,50,50,350,50], [0, 0, 0, 0, 0]
 
 	x_d, y_d, theta_d = x_goals[0],y_goals[0],theta_goals[0]
 
 	# For ex: x_d, y_d, theta_d (in **meters** and **radians**) for defining desired goal-pose.
 	# and also Kp values for the P Controller
-	kp = 0.7
+	kp = 1.2
 	ka=	5
 	# vel_x = 0
 	# vel_y = 0
@@ -118,8 +127,11 @@ def main():
 	# 
 	# Control Loop goes here
 	while not rospy.is_shutdown():
+		global hola_theta_odom
+
 		print(                x_d,            y_d,            theta_d)
 		print("odom: " + str(hola_x)+" "+str(hola_y)+" "+str(hola_theta))
+		# print(hola_theta_odom)
 		dist_error = math.sqrt(math.pow((x_d - hola_x), 2) + math.pow((y_d - hola_y), 2))
 
 		dist_tolerance = 5
@@ -130,14 +142,19 @@ def main():
 		e_g_x = x_d - hola_x
 		e_g_y = y_d - hola_y
 
-		e_b_theta = e_g_theta
-		e_b_x = math.cos(hola_theta)*e_g_x + math.sin(hola_theta)*e_g_y
-		e_b_y = -math.sin(hola_theta)*e_g_x + math.cos(hola_theta)*e_g_y
-
+		if (theta_d-abs(hola_theta))>=0.034:
+			e_b_theta = e_g_theta
+		else:
+			e_b_theta=0
+		print("#########",e_b_theta)
+		
+		e_b_x = math.cos(e_b_theta)*e_g_x + math.sin(e_b_theta)*e_g_y
+		e_b_y = -math.sin(e_b_theta)*e_g_x + math.cos(e_b_theta)*e_g_y
 		# vel.linear.x = e_b_x*kp
 		# vel.linear.y = e_b_y*kp
 		# vel.angular.z = e_b_theta*ka
-# 
+		# e_g_theta=theta_d-hola_theta
+
 		B=np.array([[-1,1,0],[-1,-(math.cos(math.pi/3)),-math.sin(math.pi/3)],[-1,-(math.cos(math.pi/3)),(math.sin(math.pi/3))]])
 		C=np.array([[e_b_theta*ka],[e_b_x*kp],[e_b_y*kp]])
 		A=np.dot(B,C)
@@ -176,7 +193,7 @@ def main():
 					front_wheel_pub.publish(wrench2)
 					left_wheel_pub.publish(wrench3)
 					count +=1 
-					rospy.sleep(5)
+					# rospy.sleep(5)
 
 					x_d,y_d,theta_d = x_goals[count],y_goals[count],theta_goals[count]
 				except:
