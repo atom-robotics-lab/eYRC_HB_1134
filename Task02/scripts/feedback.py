@@ -17,13 +17,12 @@
 *****************************************************************************************
 '''
 
-# Team ID:		[ Team-ID ]
-# Author List:		[ Names of team members worked on this file separated by Comma: Name1, Name2, ... ]
+# Team ID:		[ hb_1134]
+# Author List:		[ kartik, krrish, harsh, manan ]
 # Filename:		feedback.py
 # Functions:
-#			[ Comma separated list of functions in this file ]
-# Nodes:		Add your publishing and subscribing node
-
+#			[ callback, main ]
+# Nodes:		aruco_feedback_node
 
 ######################## IMPORT MODULES ##########################
 
@@ -41,7 +40,7 @@ import imutils
 
 ############################ GLOBALS #############################
 
-aruco_publisher = rospy.Publisher('/detected_aruco', Pose2D, queue_size=10)
+aruco_publisher = rospy.Publisher('detected_aruco', Pose2D, queue_size=10)
 aruco_msg = Pose2D()
 
 arucoDict = cv2.aruco.Dictionary_get(cv2.aruco.DICT_4X4_250)
@@ -71,14 +70,8 @@ def callback(data):
     # Bridge is Used to Convert ROS Image message to OpenCV image
     br = CvBridge()
     rospy.loginfo("receiving camera frame")
-    # Receiving raw image in a "grayscale" format
-    # get_frame = br.imgmsg_to_cv2(data, "mono8")
-    # current_frame = cv2.resize(get_frame, (500, 500), interpolation=cv2.INTER_LINEAR)
-    # print(current_frame)
-    # current_frame=current_frame[:,:,::-1]
 
     cv1_image = br.imgmsg_to_cv2(data, "bgr8")
-    # cv1_image=cv1_image[::-1,::-1]
 
     
     print("control loop")
@@ -122,44 +115,18 @@ def aruco_detection(image):
             cY = int((topLeft[1] + bottomRight[1]) / 2.0)
 
             #center of topleft and topright of aruco
-            mx = int((topRight[0] + bottomRight[0]) / 2.0)
-            my = int((topRight[1] + bottomRight[1]) / 2.0)
+            mx = int((topLeft[0] + topRight[0]) / 2.0)
+            my = int((topLeft[1] + topRight[1]) / 2.0)
             
             if(cX - mx) == 0:
                 angle = 0
 
             else:
-                # print("SSSSSSSSSSSSS")
-                # angle_list_1 = list(range(359,0,-1))
-                # angle_list_1 = angle_list_1[90:] + angle_list_1[:90]
-                # angle_list_2 = list(range(359,0,-1))
-                # angle_list_2 = angle_list_2[-90:] + angle_list_2[:-90]
-                # x=pt2[0]-pt1[0] # unpacking tuple
-                # y=pt2[1]-pt1[1]
-                # angle=int(math.degrees(math.atan2(y,x)))
-               
-                slope = float((my - cY) / (mx - cX))
-                radians = (math.atan2(slope,1))
-                # print("DDDDDDDDDDD",radians)
-                #radians= (1.5708+radians)
-                angle =math.degrees(math.atan2(slope,1))
+                slope = (my - cY) / (mx - cX)
+                radians = (math.atan(slope))
+
+                angle =math.degrees(math.atan(slope))
                 angle=90-angle
-                # radians = 1.5708- radians
-
-            # if topLeft[0] == topRight[0]:
-            #     count = count + 1
-
-            # if count%2 == 0:
-            #     angle = angle
-
-            # else:
-            #     angle = angle + 180
-
-            # if 360 > angle > 180:
-            #     angle = angle - 360
-
-            # else:
-            #     angle = angle
 
             cv2.circle(image, (cX, cY), radius, (0, 0, 255), 3)
 
@@ -196,7 +163,6 @@ def aruco_detection(image):
 def main():
     rospy.init_node('aruco_feedback_node')
     rospy.Subscriber('/overhead_cam/image_raw', Image, callback)
-    image_pub = rospy.Publisher("image_topic_2", Image, queue_size=10)
     
     rospy.spin()
 
