@@ -103,7 +103,7 @@ def main():
 	rate = rospy.Rate(100)
 	
 	# Initialise variables that may be needed for the control loop
-	x_goals,y_goals,theta_goals =[50,350,50,250,250], [350,50,50,350,50], [0, 0, 0, 0, 0]
+	x_goals,y_goals,theta_goals =[249,249,50,250,250], [249,50,50,350,50], [0.5, 1.2, 0, 0, 0]
 	# x_goals,y_goals,theta_goals = [350,50,50,350,250], [350,350,50,50,250], [0.785, 2.335, -2.335, -0.785, 0]
 	
 	# x_goals,y_goals,theta_goals = [1,0,0,0,1], [0,1,0,0,0], [0, 0, 0, 3, -3]
@@ -116,7 +116,7 @@ def main():
 	# For ex: x_d, y_d, theta_d (in **meters** and **radians**) for defining desired goal-pose.
 	# and also Kp values for the P Controller
 	kp = 1.2
-	ka=	5
+	ka=	1.8
 	# vel_x = 0
 	# vel_y = 0
 	# vel_z = 0
@@ -132,7 +132,7 @@ def main():
 		print(                x_d,            y_d,            theta_d)
 		print("odom: " + str(hola_x)+" "+str(hola_y)+" "+str(hola_theta))
 		# print(hola_theta_odom)
-		dist_error = math.sqrt(math.pow((x_d - hola_x), 2) + math.pow((y_d - hola_y), 2))
+		dist_error = math.sqrt((x_d - hola_x)**2 + (y_d - hola_y)**2)
 
 		dist_tolerance = 5
 		theta_tolerance = 0.1
@@ -155,49 +155,56 @@ def main():
 		# vel.angular.z = e_b_theta*ka
 		# e_g_theta=theta_d-hola_theta
 
-		B=np.array([[-1,1,0],[-1,-(math.cos(math.pi/3)),-math.sin(math.pi/3)],[-1,-(math.cos(math.pi/3)),(math.sin(math.pi/3))]])
-		C=np.array([[e_b_theta*ka],[e_b_x*kp],[e_b_y*kp]])
-		A=np.dot(B,C)
-		ary=A.flatten()	
-		wrench1.force.x=ary[2]
-		wrench2.force.x=ary[0]
-		wrench3.force.x=ary[1]
+		#B=np.array([[-1,1,0],[-1,-(math.cos(math.pi/3)),-math.sin(math.pi/3)],[-1,-(math.cos(math.pi/3)),(math.sin(math.pi/3))]])
+		#C=np.array([[e_b_theta*ka],[e_b_x*kp],[e_b_y*kp]])
+		#A=np.dot(B,C)
+		#ary=A.flatten()	
+		#wrench1.force.x=ary[2]
+		#wrench2.force.x=ary[0]
+		#wrench3.force.x=ary[1]
+		
+		#right_wheel_pub.publish(wrench1)
+		#front_wheel_pub.publish(wrench2)
+		#left_wheel_pub.publish(wrench3)
 
+		vel_front = -e_b_theta*ka + e_b_x
+		vel_right = -e_b_theta*ka - e_b_x*math.cos(math.pi/3) - e_b_y*math.sin(math.pi/3)
+		vel_left = -e_b_theta*ka - e_b_x*math.cos(math.pi/3) + e_b_y*math.sin(math.pi/3)
+		wrench1.force.x=vel_front
+		wrench2.force.x=vel_right
+		wrench3.force.x=vel_left
 		right_wheel_pub.publish(wrench1)
 		front_wheel_pub.publish(wrench2)
 		left_wheel_pub.publish(wrench3)
-
 
 		# publishing the velocity
 
 		rate.sleep()
 		print("dist error = " + str(dist_error))
 
-		if abs(dist_error) < dist_tolerance:
-			print("if one")
-			if abs(e_b_theta) < theta_tolerance:
-				print("eazy")
-				try:
-					print("but don't cry")
-					# vel.linear.x = 0
-					# vel.linear.y = 0
-					# vel.angular.z = 0
-					# pub.publish(vel)
-					
+		if abs(dist_error) < dist_tolerance and abs(e_b_theta) < theta_tolerance:
+			print("eazy")
+			try:
+				print("but don't cry")
+				# vel.linear.x = 0
+				# vel.linear.y = 0
+				# vel.angular.z = 0
+				# pub.publish(vel)
+				
 
-					wrench1.force.x=0
-					wrench2.force.x=0
-					wrench3.force.x=0
-			
-					right_wheel_pub.publish(wrench1)
-					front_wheel_pub.publish(wrench2)
-					left_wheel_pub.publish(wrench3)
-					count +=1 
-					# rospy.sleep(5)
+				wrench1.force.x=0
+				wrench2.force.x=0
+				wrench3.force.x=0
+		
+				right_wheel_pub.publish(wrench1)
+				front_wheel_pub.publish(wrench2)
+				left_wheel_pub.publish(wrench3)
+				count +=1 
+				rospy.sleep(5)
 
-					x_d,y_d,theta_d = x_goals[count],y_goals[count],theta_goals[count]
-				except:
-					print("goal reached")
+				x_d,y_d,theta_d = x_goals[count],y_goals[count],theta_goals[count]
+			except:
+				print("goal reached")
 
 
 

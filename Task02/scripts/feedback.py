@@ -122,8 +122,8 @@ def aruco_detection(image):
             cY = int((topLeft[1] + bottomRight[1]) / 2.0)
 
             #center of topleft and topright of aruco
-            mx = int((topLeft[0] + topRight[0]) / 2.0)
-            my = int((topLeft[1] + topRight[1]) / 2.0)
+            mx = int((topRight[0] + bottomRight[0]) / 2.0)
+            my = int((topRight[1] + bottomRight[1]) / 2.0)
             
             if(cX - mx) == 0:
                 angle = 0
@@ -138,10 +138,10 @@ def aruco_detection(image):
                 # y=pt2[1]-pt1[1]
                 # angle=int(math.degrees(math.atan2(y,x)))
                
-                slope = float((cY - my) / (cX - mx))
+                slope = float((my - cY) / (mx - cX))
                 radians = (math.atan2(slope,1))
                 # print("DDDDDDDDDDD",radians)
-                radians= (1.5708+radians)
+                #radians= (1.5708+radians)
                 angle =math.degrees(math.atan2(slope,1))
                 angle=90-angle
                 # radians = 1.5708- radians
