@@ -79,11 +79,6 @@ def callback(data):
 	# Bridge is Used to Convert ROS Image message to OpenCV image
 	br = CvBridge()
 	rospy.loginfo("receiving camera frame")
-	# Receiving raw image in a "grayscale" format
-	# get_frame = br.imgmsg_to_cv2(data, "mono8")
-	# current_frame = cv2.resize(get_frame, (500, 500), interpolation=cv2.INTER_LINEAR)
-	# print(current_frame)
-	# current_frame=current_frame[:,:,::-1]
 
 	cv1_image = br.imgmsg_to_cv2(data, "bgr8")
 	# cv1_image=cv1_image[::-1,::-1]
@@ -95,27 +90,6 @@ def callback(data):
 
 	cv2.imshow("Frame", Result[4])
 	cv2.waitKey(1)
-# def angle_calculate(pt1,pt2, trigger = 0):  # function which returns angle between two points in the range of 0-359
-	# angle_list_1 = list(range(359,0,-1))
-	# angle_list_1 =     angle_list_1[90:] + angle_list_1[:90]
-	# angle_list_2 = list(range(359,0,-1))
-	# angle_list_2 = angle_list_2[-90:] + angle_list_2[:-90]
-	# x=pt2[0]-pt1[0] # unpacking tuple
-	# y=pt2[1]-pt1[1]
-	# angle=int(math.degrees(math.atan2(y,x))) #takes 2 points nad give angle with respect to horizontal axis in range(-180,180)
-	# if trigger == 0:
-		# angle = angle_list_2[angle]
-	# else:
-		# angle = angle_list_1[angle]
-	# return int(angle)
-
-# def odom_feedback(msg2):
-    # global hola_theta1 , hola_x,hola_y
-    # hola_x = msg2.pose.pose.position.x
-    # hola_y = msg2.pose.pose.position.y
-# 
-    # hola_theta1 = euler_from_quaternion([msg2.pose.pose.orientation.x, msg2.pose.pose.orientation.y, msg2.pose.orientation.z, msg2.pose.pose.orientation.w])[2]
-    # print("$$$$$$$$$$$$",hola_theta)
 
 def aruco_detection(image):
 
@@ -156,70 +130,31 @@ def aruco_detection(image):
 			#center of topleft and topright of aruco
 			mx = int((topLeft[0] + topRight[0]) / 2.0)
 			my = int((topLeft[1] + topRight[1]) / 2.0)
-			# a = math.atan2(my, mx)
-			# c = math.atan2(cY, cX)
-			# if a < 0: 
-				# a += math.pi*2
-			# if c < 0: 
-				# c += math.pi*2
-			# return (math.pi*2 + c - a) 
-			# if a > c:
-				# (c - a)
-			# 
+
 			if(cY - my) == 0:
 				angle = 0
 			else:
-				# print("SSSSSSSSSSSSS")
-				# angle_list_1 = list(range(359,0,-1))
-				# angle_list_1 = angle_list_1[90:] + angle_list_1[:90]
-				# angle_list_2 = list(range(359,0,-1))
-				# angle_list_2 = angle_list_2[-90:] + angle_list_2[:-90]
-				# x=pt2[0]-pt1[0] # unpacking tuple
-				# y=pt2[1]-pt1[1]
-				# angle=int(math.degrees(math.atan2(y,x)))
-			   
+
 				slope = float( (mx-cX)/(my-cY))
 				if cX<mx and cY>my:
-					radians = (math.atan2(slope))
+					radians = (math.atan2(slope,1))
 				if cY<my and cX<mx:
 					print(")))))))))))))))))))))))")
 
-					radians = (math.atan2(slope))
-					radians= -(3-radians)
+					radians = (math.atan2(slope,1))
+					radians= -(math.pi - radians)
 				if cX>mx and cY>my:
-					radians = (math.atan2(slope))
+					radians = (math.atan2(slope,1))
 				if cY<my and cX>mx:
-					radians = (math.atan2(slope))
-					radians= (3+radians)
+					radians = (math.atan2(slope,1))
+					radians= (math.pi + radians)
 
-						
-						
 
-				# print("DDDDDDDDDDD",radians)
-				# radians= (1.5708-radians)
 				angle =math.degrees(math.atan2(slope,1))
-				# radians = 1.5708- radians
-
-			# if topLeft[0] == topRight[0]:
-			#     count = count + 1
-
-			# if count%2 == 0:
-			#     angle = angle
-
-			# else:
-			#     angle = angle + 180
-
-			# if 360 > angle > 180:
-			#     angle = angle - 360
-
-			# else:
-			#     angle = angle
 
 			cv2.circle(image, (cX, cY), 1, (0, 0, 255), -1)
 			cv2.circle(image, (mx, my),1, (0, 0, 255), -1)
-			# cv2.circle(image, (cX, cY), radius, (0, 0, 255), 3)
-			# cv2.circle(image, (cX, cY), radius, (0, 0, 255), 3)
-			# cv2.circle(image, (cX, cY), radius, (0, 0, 255), 3)
+
 
 
 
@@ -258,10 +193,6 @@ def aruco_detection(image):
 def main():
 	rospy.init_node('aruco_feedback_node')
 	rospy.Subscriber('/overhead_cam/image_raw', Image, callback)
-
-	# rospy.Subscriber('/odom', Odometry, odom_feedback)
-	
-	# image_pub = rospy.Publisher("image_topic_2", Image, queue_size=10)
 	
 	rospy.spin()
 
