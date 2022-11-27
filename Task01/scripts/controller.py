@@ -107,6 +107,7 @@ def main():
                     vel.linear.y = 0
                     vel.angular.z = 0
                     pub.publish(vel)
+                    sleep(2)
                     x_d,y_d,theta_d = x_goals[count],y_goals[count],theta_goals[count]
                     count +=1 
                 except:

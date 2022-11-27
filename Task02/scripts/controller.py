@@ -79,20 +79,20 @@ def cleanup():
 	############################################
   
   
-#def task2_goals_Cb(msg):
-#	global x_goals, y_goals, theta_goals
-#	x_goals.clear()
-#	y_goals.clear()
-#	theta_goals.clear()
-#
-#	for waypoint_pose in msg.poses:
-#		x_goals.append(waypoint_pose.position.x)
-#		y_goals.append(waypoint_pose.position.y)
-#
-#		orientation_q = waypoint_pose.orientation
-#		orientation_list = [orientation_q.x, orientation_q.y, orientation_q.z, orientation_q.w]
-#		theta_goal = euler_from_quaternion (orientation_list)[2]
-#		theta_goals.append(theta_goal)
+def task2_goals_Cb(msg):
+	global x_goals, y_goals, theta_goals
+	x_goals.clear()
+	y_goals.clear()
+	theta_goals.clear()
+
+	for waypoint_pose in msg.poses:
+		x_goals.append(waypoint_pose.position.x)
+		y_goals.append(waypoint_pose.position.y)
+
+		orientation_q = waypoint_pose.orientation
+		orientation_list = [orientation_q.x, orientation_q.y, orientation_q.z, orientation_q.w]
+		theta_goal = euler_from_quaternion (orientation_list)[2]
+		theta_goals.append(theta_goal)
 
 def aruco_feedback_Cb(msg):
 	############ ADD YOUR CODE HERE ############
@@ -138,9 +138,9 @@ def main():
 	left_wheel_pub = rospy.Publisher('/left_wheel_force', Wrench, queue_size=10)
 
 	rospy.Subscriber('detected_aruco',Pose2D,aruco_feedback_Cb)
-	#rospy.Subscriber('task2_goals',PoseArray,task2_goals_Cb)
+	rospy.Subscriber('task2_goals',PoseArray,task2_goals_Cb)
 	rospy.wait_for_message("detected_aruco",Pose2D)
-	#rospy.wait_for_message("/task2_goals",PoseArray)
+	rospy.wait_for_message("/task2_goals",PoseArray)
 	
 	rate = rospy.Rate(100)
 
@@ -154,7 +154,7 @@ def main():
 	#      find three omni-wheel velocities (v1, v2, v3) = left/right/center_wheel_force (assumption to simplify)
 	#      given velocity of the chassis (Vx, Vy, W)
 
-	x_goals,y_goals,theta_goals = [350,50,50,350,250], [350,350,50,50,250], [0.785, 2.335, -2.335, -0.785, 0]
+	#x_goals,y_goals,theta_goals = [350,50,50,350,250], [350,350,50,50,250], [0.785, 2.335, -2.335, -0.785, 0]
 
 	x_d,y_d,theta_d = x_goals[0],y_goals[0],theta_goals[0]
 	dist_tolerance,theta_tolerance = 5, 0.1
@@ -180,8 +180,8 @@ def main():
 
 		# Calculate the required velocity of bot for the next iteration(s)
 		e_b_theta = e_g_theta*ka
-		e_b_x = (math.cos(e_g_theta)*e_g_x + math.sin(e_g_theta)*e_g_y)*kp
-		e_b_y = (-math.sin(e_g_theta)*e_g_x + math.cos(e_g_theta)*e_g_y)*kp
+		e_b_x = (math.cos(hola_theta)*e_g_x + math.sin(hola_theta)*e_g_y)*kp
+		e_b_y = (-math.sin(hola_theta)*e_g_x + math.cos(hola_theta)*e_g_y)*kp
 
 		vel = (e_b_x,e_b_y,-e_b_theta)
 		#vel = (0,0,-1)
@@ -194,6 +194,7 @@ def main():
 		front_wheel_pub.publish(wrench)
 		wrench.force.x=inverse_kinematics(vel)[1]
 		left_wheel_pub.publish(wrench)
+		print(theta_d, hola_theta)
 		# Modify the condition to Switch to Next goal (given position in pixels instead of meters)
 		if abs(e_g_x) < dist_tolerance and abs(e_g_y) < dist_tolerance and abs(e_g_theta) < theta_tolerance:
 			cleanup()

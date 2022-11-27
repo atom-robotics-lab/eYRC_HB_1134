@@ -59,7 +59,6 @@ markerID1 = None
 radius1 = None
 T = 0
 dist = 0
-angle = 0
 count = 0
 radians = math.pi/2
 global current_frame
@@ -83,7 +82,7 @@ def callback(data):
 
 def aruco_detection(image):
 
-    global count, radians, angle
+    global count, radians
 
     image = cv1_image
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
@@ -106,8 +105,6 @@ def aruco_detection(image):
             bottomLeft = (int(bottomLeft[0]), int(bottomLeft[1]))
             topLeft = (int(topLeft[0]), int(topLeft[1]))
 
-            print(topLeft, topRight, bottomLeft, bottomRight,"DDDDDDDDDDDDD")
-
             radius = int(math.sqrt((int(topRight[0]) - int(bottomLeft[0])) ** 2 + (int(topRight[1]) - int(bottomLeft[1])) ** 2) / 2)
 
             # Center of aruco / bot
@@ -118,15 +115,8 @@ def aruco_detection(image):
             mx = int((topLeft[0] + topRight[0]) / 2.0)
             my = int((topLeft[1] + topRight[1]) / 2.0)
             
-            if(cX - mx) == 0:
-                angle = 0
-
-            else:
-                slope = (my - cY) / (mx - cX)
-                radians = (math.atan(slope))
-
-                angle =math.degrees(math.atan(slope))
-                angle=90-angle
+            radians = 1.57+round(math.atan2(my-cY,mx-cX),2)
+            print(radians)
 
             cv2.circle(image, (cX, cY), radius, (0, 0, 255), 3)
 
@@ -141,8 +131,6 @@ def aruco_detection(image):
 
             markerID1 = markerID
             print(markerID1)
-            print(angle)
-            cv2.putText(image, "Angle = " + str(angle), (60, 60), cv2.FONT_HERSHEY_SIMPLEX,0.5, (0, 0, 0), 2)
             cv2.putText(image, "bot_x = " + str(cX) + ", bot_y = " + str(cY), (cX - 50, cY - 50), cv2.FONT_HERSHEY_SIMPLEX,0.5, (0, 0, 0), 2)
             cv2.putText(image, "radians = " + str(radians), (50, 50), cv2.FONT_HERSHEY_SIMPLEX,0.5, (0, 0, 0), 2)
 
