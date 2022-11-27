@@ -2,7 +2,11 @@
 
 
 # Importing the required libraries
+import numpy as np
+
 import rospy
+from geometry_msgs.msg import Pose2D
+from geometry_msgs.msg import Wrench
 
 # publishing to /cmd_vel with msg type: Twist
 from geometry_msgs.msg import Twist
@@ -21,17 +25,22 @@ hola_x = 0
 hola_y = 0
 hola_theta = 0
 x_goals, y_goals, theta_goals = [
-    1, -1, -1, 1, 0], [1, 1, -1, -1, 0], [0.785, 2.335, -2.335, -0.785, 0]
+	 -1, -1, 1, 0], [ 1, -1, -1, 0], [ 2.335, -2.335, -0.785, 0]
 
 # The callback function for the position of the bot
 
-
+# 
 def odometryCb(msg):
-    global hola_x, hola_y, hola_theta
-    hola_x = msg.pose.pose.position.x
-    hola_y = msg.pose.pose.position.y
-    hola_theta = euler_from_quaternion(
-        [msg.pose.pose.orientation.x, msg.pose.pose.orientation.y, msg.pose.pose.orientation.z, msg.pose.pose.orientation.w])[2]
+	global hola_x, hola_y, hola_theta
+	hola_x = msg.pose.pose.position.x
+	hola_y = msg.pose.pose.position.y
+	hola_theta = euler_from_quaternion(
+		[msg.pose.pose.orientation.x, msg.pose.pose.orientation.y, msg.pose.pose.orientation.z, msg.pose.pose.orientation.w])[2]
+# def aruco_feedback_Cb(msg):
+	# global hola_theta , hola_x,hola_y
+	# hola_x = msg.pose.pose.position.x
+	# hola_y = msg.pose.pose.position.y
+	# hola_theta =msg.theta
 
 
 # def task1_goals_Cb(msg):
@@ -53,119 +62,100 @@ def odometryCb(msg):
 
 
 def main():
-    # Initialze Node named controller
-    rospy.init_node('controller')
+	# rospy.Subscriber('/odom', Odometry, odometryCb)
 
-    # Initialzing Publisher and Subscriber for cmd_vel and odometry
-    pub = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
-    rospy.Subscriber('/odom', Odometry, odometryCb)
-    # rospy.Subscriber('task1_goals', PoseArray, task1_goals_Cb)
+	right_wheel_pub = rospy.Publisher(
+		'/right_wheel_force', Wrench, queue_size=10)
+	wrench1 = Wrench()
 
-    # Declare a Twist message for the velocity
-    vel = Twist()
+	front_wheel_pub = rospy.Publisher(
+		'/front_wheel_force', Wrench, queue_size=10)
+	wrench2=Wrench()
 
-    # rospy.wait_for_message("/task1_goals", PoseArray)
+	left_wheel_pub = rospy.Publisher(
+		'/left_wheel_force', Wrench, queue_size=10)
+	wrench3=Wrench()
 
-    # For maintaining control loop rate.
-    rate = rospy.Rate(100)
+	# Initialze Node named controller
+	rospy.init_node('controller')
 
-    # defining the goal vaariables
-    x_d, y_d, theta_d = x_goals[0], y_goals[0], theta_goals[0]
-    # x_d, y_d, theta_d = -1, -1, 1
+	# Initialzing Publisher and Subscriber for cmd_vel and odometry
+	# pub = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
+	rospy.Subscriber('/odom', Odometry, odometryCb)
+	# rospy.Subscriber('/detected_aruco', Pose2D, aruco_feedback_Cb)
 
-    # initializing variable kp for the P-controller
-    kp = 0.40
+	# rospy.Subscriber('task1_goals', PoseArray, task1_goals_Cb)
 
-    # Control Loop
-    while not rospy.is_shutdown():
-        print("odom: " + str(hola_x)+" "+str(hola_y)+" "+str(hola_theta))
+	# Declare a Twist message for the velocity
+	vel = Twist()
 
-        # Find error (in x, y and theta) in global frame
-        dist_error = math.sqrt(
-            math.pow((x_d - hola_x), 2) + math.pow((y_d - hola_y), 2))
-        theta_error = round(theta_d - hola_theta, 2)
+	# rospy.wait_for_message("/task1_goals", PoseArray)
 
-        x_error = round(x_d-hola_x, 2)
-        y_error = round(y_d-hola_y, 2)
+	# For maintaining control loop rate.
+	rate = rospy.Rate(100)
 
-        x = x_error+x_error*math.cos(theta_error)
-        y = y_error+y_error*math.sin(theta_error)
+	# defining the goal vaariables
+	x_d, y_d, theta_d = x_goals[0], y_goals[0], theta_goals[0]
+	# x_d, y_d, theta_d = -1, -1, 1
 
-        theta_tolerance = 0.01745
-        dist_tolerance = 0.05
+	# initializing variable kp for the P-controller
+	kp = 0.40
 
-        # defining the variables for velocity
-        vel_x = 0
-        vel_y = 0
-        vel_z = 0
-        count = 0
+	# Control Loop
+	while not rospy.is_shutdown():
+		# print("odom: " + str(hola_x)+" "+str(hola_y)+" "+str(hola_theta))
+		print("##################")
+		print(hola_theta)
+		print("##################")
 
-        rospy.loginfo("theta error: %f, distance error: %f",
-                      theta_error, dist_error)
+		# Find error (in x, y and theta) in global frame
+		dist_error = math.sqrt(
+			math.pow((x_d - hola_x), 2) + math.pow((y_d - hola_y), 2))
+		e_g_x = x_d - hola_x
+		e_g_y = y_d - hola_y
 
-        # comparing the errors with their tolerance and moving the bot accordingly
-        if -theta_tolerance < theta_error < +theta_tolerance:
-            if -dist_tolerance < dist_error < +dist_tolerance:
-                # both the errors are in their tolerance values hence the goal has been reached
-                vel_x = 0
-                vel_y = 0
-                print("goal reached")
+		e_g_theta = round(theta_d - hola_theta, 2)
+		e_b_theta = (theta_d) -(hola_theta)
 
-                if count < len(x_goals):
-                    count += 1
-                    try:
-                        x_d = x_goals[count]
-                        y_d = y_goals[count]
-                        theta_d = theta_goals[count]
-                    except:
-                        print("Run Completed")
+		e_b_x = math.cos(e_b_theta)*e_g_x + math.sin(e_b_theta)*e_g_y
+		e_b_y = -math.sin(e_b_theta)*e_g_x + math.cos(e_b_theta)*e_g_y
+		B=np.array([[-1,1,0],[-1,-(math.cos(math.pi/3)),-math.sin(math.pi/3)],[-1,-(math.cos(math.pi/3)),(math.sin(math.pi/3))]])
+		C=np.array([[e_b_theta*5],[e_b_x*5],[e_b_y*5]])
+		A=np.dot(B,C)
+		ary=A.flatten()	
+		wrench1.force.x=ary[1]*30
+		wrench2.force.x=ary[0]*30
+		wrench3.force.x=ary[2]*30
 
-            elif abs(dist_error) > dist_tolerance:
-                print("if")
-                while abs(dist_error) > dist_tolerance:
-                    print("while")
-                    # There is error in distance so moving the bot in straight line
-                    vel.linear.x = x*kp
-                    vel.linear.y = y*kp
-                    pub.publish(vel)
-                    dist_error = math.sqrt(
-                        math.pow((x_d - hola_x), 2) + math.pow((y_d - hola_y), 2))
-                    x_error = round(x_d-hola_x, 2)
-                    y_error = round(y_d-hola_y, 2)
+		right_wheel_pub.publish(wrench1)
+		front_wheel_pub.publish(wrench2)
+		left_wheel_pub.publish(wrench3)
+		if abs(dist_error) < 0.1:
+			print("if one")
+			if abs(e_b_theta) < 0.1:
+				print("eazy")
+				try:
+					print("but don't cry")
+					wrench1.force.x=0
+					wrench2.force.x=0
+					wrench3.force.x=0
+			
+					right_wheel_pub.publish(wrench1)
+					front_wheel_pub.publish(wrench2)
+					left_wheel_pub.publish(wrench3)
+					count +=1 
+					# rospy.sleep(5)
 
-                    x = x_error+x_error*math.cos(theta_error)
-                    y = y_error+y_error*math.sin(theta_error)
+					x_d,y_d,theta_d = x_goals[count],y_goals[count],theta_goals[count]
+				except:
+					print("goal reached")
 
-        # There is theta error so rotating the bot along its axis
-        elif theta_error > +theta_tolerance:
-            vel_z = theta_error*kp*3
-        # There is theta error so rotating the bot along its axis
-        elif theta_error < -theta_tolerance:
-            vel_z = -theta_error*kp*3
+main()
+		# x_error = round(x_d-hola_x, 2)
+		# y_error = round(y_d-hola_y, 2)
+# 
+		# x = x_error+x_error*math.cos(theta_error)
+		# y = y_error+y_error*math.sin(theta_error)
 
-        # if vel_x > 0.55:
-        #     vel_x = 0.55
-
-        # elif vel_x < -0.55:
-        #     vel_x = -0.55
-
-        # if vel_y > 0.55:
-        #     vel_y = 0.55
-
-        # elif vel_y < -0.55:
-        #     vel_y = -0.55
-
-        vel.linear.x = vel_x
-        vel.linear.y = vel_y
-        vel.angular.z = vel_z
-
-        # publishing the velocity
-        pub.publish(vel)
-        rate.sleep()
-
-
-if __name__ == "__main__":
-    try:
-        main()
-    except rospy.ROSInterruptException:
-        pass
+		
+		
