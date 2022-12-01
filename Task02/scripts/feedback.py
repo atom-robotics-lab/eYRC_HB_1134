@@ -17,13 +17,12 @@
 *****************************************************************************************
 '''
 
-# Team ID:		[ Team-ID ]
-# Author List:		[ Names of team members worked on this file separated by Comma: Name1, Name2, ... ]
+# Team ID:		[ hb_1134]
+# Author List:		[ kartik, krrish, harsh, manan ]
 # Filename:		feedback.py
 # Functions:
-#			[ Comma separated list of functions in this file ]
-# Nodes:		Add your publishing and subscribing node
-
+#			[ callback, main ]
+# Nodes:		aruco_feedback_node
 
 ######################## IMPORT MODULES ##########################
 
@@ -67,7 +66,6 @@ markerID1 = None
 radius1 = None
 T = 0
 dist = 0
-angle = 0
 count = 0
 radians = 0
 slope=0
@@ -75,18 +73,12 @@ global current_frame
 
 def callback(data):
 
-	global cv1_image, current_frame
-	# Bridge is Used to Convert ROS Image message to OpenCV image
-	br = CvBridge()
-	rospy.loginfo("receiving camera frame")
-	# Receiving raw image in a "grayscale" format
-	# get_frame = br.imgmsg_to_cv2(data, "mono8")
-	# current_frame = cv2.resize(get_frame, (500, 500), interpolation=cv2.INTER_LINEAR)
-	# print(current_frame)
-	# current_frame=current_frame[:,:,::-1]
+    global cv1_image, current_frame
+    # Bridge is Used to Convert ROS Image message to OpenCV image
+    br = CvBridge()
+    rospy.loginfo("receiving camera frame")
 
-	cv1_image = br.imgmsg_to_cv2(data, "bgr8")
-	# cv1_image=cv1_image[::-1,::-1]
+    cv1_image = br.imgmsg_to_cv2(data, "bgr8")
 
 	
 	print("control loop")
@@ -119,7 +111,7 @@ def callback(data):
 
 def aruco_detection(image):
 
-	global count, radians, angle,slope
+    global count, radians
 
 	image = cv1_image
 	gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
@@ -138,70 +130,16 @@ def aruco_detection(image):
 
 			corners = markerCorner.reshape((4, 2))
 
-			(topLeft, topRight, bottomRight, bottomLeft) = corners
-
-			topRight = (int(topRight[0]), int(topRight[1]))
-			bottomRight = (int(bottomRight[0]), int(bottomRight[1]))
-			bottomLeft = (int(bottomLeft[0]), int(bottomLeft[1]))
-			topLeft = (int(topLeft[0]), int(topLeft[1]))
+            radius = int(math.sqrt((int(topRight[0]) - int(bottomLeft[0])) ** 2 + (int(topRight[1]) - int(bottomLeft[1])) ** 2) / 2)
 
 			print(topLeft, topRight, bottomLeft, bottomRight,"DDDDDDDDDDDDD")
 
-			radius = int(math.sqrt((int(topRight[0]) - int(bottomLeft[0])) ** 2 + (int(topRight[1]) - int(bottomLeft[1])) ** 2) / 2)
-
-			# Center of aruco / bot
-			cX = int((topLeft[0] + bottomRight[0]) / 2.0)
-			cY = int((topLeft[1] + bottomRight[1]) / 2.0)
-
-			#center of topleft and topright of aruco
-			mx = int((topLeft[0] + topRight[0]) / 2.0)
-			my = int((topLeft[1] + topRight[1]) / 2.0)
-			# a = math.atan2(my, mx)
-			# c = math.atan2(cY, cX)
-			# if a < 0: 
-				# a += math.pi*2
-			# if c < 0: 
-				# c += math.pi*2
-			# return (math.pi*2 + c - a) 
-			# if a > c:
-				# (c - a)
-			# 
-			if(cY - my) == 0:
-				angle = 0
-			else:
-				# print("SSSSSSSSSSSSS")
-				# angle_list_1 = list(range(359,0,-1))
-				# angle_list_1 = angle_list_1[90:] + angle_list_1[:90]
-				# angle_list_2 = list(range(359,0,-1))
-				# angle_list_2 = angle_list_2[-90:] + angle_list_2[:-90]
-				# x=pt2[0]-pt1[0] # unpacking tuple
-				# y=pt2[1]-pt1[1]
-				# angle=int(math.degrees(math.atan2(y,x)))
-			   
-				slope = float( (mx-cX)/(my-cY))
-				if cX<mx and cY>my:
-					radians = (math.atan(slope))
-				if cY<my and cX<mx:
-					print(")))))))))))))))))))))))")
-
-					radians = (math.atan(slope))
-					radians= -(math.pi-radians)
-				if cX>mx and cY>my:
-					radians = (math.atan(slope))
-				if cY<my and cX>mx:
-					radians = (math.atan(slope))
-					radians= (math.pi+radians)
-
-						
-						
-
-				# print("DDDDDDDDDDD",radians)
-				# radians= (1.5708-radians)
-				angle =math.degrees(math.atan2(slope,1))
-				# radians = 1.5708- radians
-
-			# if topLeft[0] == topRight[0]:
-			#     count = count + 1
+            #center of topleft and topright of aruco
+            mx = int((topLeft[0] + topRight[0]) / 2.0)
+            my = int((topLeft[1] + topRight[1]) / 2.0)
+            
+            radians = 1.57+round(math.atan2(my-cY,mx-cX),2)
+            print(radians)
 
 			# if count%2 == 0:
 			#     angle = angle
@@ -215,11 +153,10 @@ def aruco_detection(image):
 			# else:
 			#     angle = angle
 
-			cv2.circle(image, (cX, cY), 1, (0, 0, 255), -1)
-			cv2.circle(image, (mx, my),1, (0, 0, 255), -1)
-			# cv2.circle(image, (cX, cY), radius, (0, 0, 255), 3)
-			# cv2.circle(image, (cX, cY), radius, (0, 0, 255), 3)
-			# cv2.circle(image, (cX, cY), radius, (0, 0, 255), 3)
+            markerID1 = markerID
+            print(markerID1)
+            cv2.putText(image, "bot_x = " + str(cX) + ", bot_y = " + str(cY), (cX - 50, cY - 50), cv2.FONT_HERSHEY_SIMPLEX,0.5, (0, 0, 0), 2)
+            cv2.putText(image, "radians = " + str(radians), (50, 50), cv2.FONT_HERSHEY_SIMPLEX,0.5, (0, 0, 0), 2)
 
 
 
@@ -256,14 +193,10 @@ def aruco_detection(image):
 
 
 def main():
-	rospy.init_node('aruco_feedback_node')
-	rospy.Subscriber('/overhead_cam/image_raw', Image, callback)
-
-	# rospy.Subscriber('/odom', Odometry, odom_feedback)
-	
-	# image_pub = rospy.Publisher("image_topic_2", Image, queue_size=10)
-	
-	rospy.spin()
+    rospy.init_node('aruco_feedback_node')
+    rospy.Subscriber('/overhead_cam/image_raw', Image, callback)
+    
+    rospy.spin()
 
 
 if __name__ == '__main__':
