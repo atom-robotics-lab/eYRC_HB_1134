@@ -84,7 +84,7 @@ Keeping the above scenario in mind, in eYRC 2022-23 we were presented with the t
 
 In this theme, our team had to deploy holonomic robot in Simulated Environment. Unlike the usual, more popular differential drive robots, the holonomic drive robots can control all the three degrees of freedom possible on a plane (translation along the x, y-axis and rotation along the z-axis). This gives the robot the ability to make art that would otherwise not be possible with the usual two-wheeled differential drive robot. This ability is demonstrated by the following video/gif of KUKA omniMove:
 <br>
-<center><image src="https://i.ibb.co/Fwskw4y/ezgif-com-gif-maker.gif" height="350" width="600"></center>
+<image src="https://i.ibb.co/Fwskw4y/ezgif-com-gif-maker.gif" height="350" width="600">
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
