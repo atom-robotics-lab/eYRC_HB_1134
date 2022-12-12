@@ -140,7 +140,7 @@ This is an example of how to list things you need to use the software and how to
 
 Use this space to show useful examples of how a project can be used. Additionally you may check the resources added below.
 
-- For running the Task02
+- For running the Task01
     ```sh
     roslaunch Task02 gazebo.launch
     roslaunch Task02 controller.py
